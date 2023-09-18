@@ -2,16 +2,20 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class RubyController : MonoBehaviour
 {
+    public ParticleSystem hitParticle;
+
     public Projectile projectilePrefab;
-    AudioSource audioSource;
-    private int maxHp = 5;
-    private int currentHp;
-
-
+    //AudioSource audioSource;
+    private float maxHp = 5f;
+    private float currentHpUI;
+    private float currentHp;
     public float speed = 4f;
+
+    public Image image;
 
     private Animator animator;
     private Rigidbody2D rigidbodt2d;
@@ -30,11 +34,15 @@ public class RubyController : MonoBehaviour
         animator = GetComponent<Animator>();
         rigidbodt2d = GetComponent<Rigidbody2D>();
         spriteRenderer = GetComponent<SpriteRenderer>();
+
+        hitParticle = GetComponentInChildren<ParticleSystem>(); //자식오브젝트도 컴퍼넌트 검사 하나만 있을 때만 가능
     }
 
     private void Start()
     {
         currentHp = maxHp;
+        currentHpUI = maxHp;
+        //hitParticle.Stop();
     }
 
     private void FixedUpdate()
@@ -95,6 +103,11 @@ public class RubyController : MonoBehaviour
         animator.SetFloat("Speed", directionMag);
         animator.SetFloat("Look X", lookDirection.x);
         animator.SetFloat("Look Y", lookDirection.y);
+
+        currentHp = Mathf.Clamp((currentHp -= Time.deltaTime), currentHpUI, maxHp);
+
+        image.fillAmount = currentHp / maxHp;
+
     }
 
     public void TakeDamage(int damage)
@@ -106,22 +119,23 @@ public class RubyController : MonoBehaviour
 
         spriteRenderer.color = Color.red;
 
-        currentHp = Mathf.Clamp(currentHp - damage, 0, maxHp);
-        Debug.Log(currentHp);
+        currentHpUI = Mathf.Clamp(currentHpUI - damage, 0, maxHp);
 
         isInvicible = true;
         invincibleTimer = timeInvicible;
 
         //audioSource.PlayOneShot(hitsound);
         animator.SetTrigger("Hit");
+
+        hitParticle.Stop(); // 맞을때마다 이팩트를 처음부터 재생하고 싶을때는 Stop->Play를 해야함
+        hitParticle.Play();
     }
     public void TakeHeal(int heal)
     {
         spriteRenderer.color = Color.white;
 
-        currentHp = Mathf.Clamp(currentHp + heal, 0, maxHp);
+        currentHpUI = Mathf.Clamp(currentHpUI + heal, 0, maxHp);
 
         Debug.Log(currentHp);
-
     }
 }
